@@ -1,0 +1,226 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-ack-catalog
+  namespace: harmonix
+data:
+  catalog.yaml: |
+    apiVersion: backstage.io/v1alpha1
+    kind: Component
+    metadata:
+      name: s3-ack-controller
+      title: S3 ACK Controller
+      description: "AWS ACK Controller for managing S3 resources in Kubernetes"
+      annotations:
+        backstage.io/kubernetes-id: s3-ack-controller
+        backstage.io/kubernetes-namespace: ack-system
+        backstage.io/source-location: url:https://github.com/aws-controllers-k8s/s3-controller
+      tags:
+        - aws
+        - s3
+        - ack
+        - storage
+        - kubernetes
+    spec:
+      type: service
+      lifecycle: production
+      owner: platform-team
+      system: storage-management
+      providesApis:
+        - s3-management-api
+      dependsOn:
+        - resource:aws-s3
+    ---
+    apiVersion: backstage.io/v1alpha1
+    kind: API
+    metadata:
+      name: s3-management-api
+      title: S3 Management API
+      description: "Kubernetes API for managing S3 buckets through ACK Controller"
+      annotations:
+        backstage.io/kubernetes-id: s3-management-api
+      tags:
+        - aws
+        - s3
+        - kubernetes
+        - crd
+    spec:
+      type: kubernetes
+      lifecycle: production
+      owner: platform-team
+      system: storage-management
+      definition: |
+        # S3 Bucket Custom Resource Definition
+        apiVersion: apiextensions.k8s.io/v1
+        kind: CustomResourceDefinition
+        metadata:
+          name: buckets.s3.services.k8s.aws
+        spec:
+          group: s3.services.k8s.aws
+          versions:
+          - name: v1alpha1
+            served: true
+            storage: true
+            schema:
+              openAPIV3Schema:
+                type: object
+                properties:
+                  spec:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: "Name of the S3 bucket"
+                      acl:
+                        type: string
+                        description: "Access control list for the bucket"
+                      versioning:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            enum: ["Enabled", "Suspended"]
+          scope: Namespaced
+          names:
+            plural: buckets
+            singular: bucket
+            kind: Bucket
+    ---
+    apiVersion: backstage.io/v1alpha1
+    kind: Resource
+    metadata:
+      name: aws-s3
+      title: AWS S3 Storage Service
+      description: "Amazon Simple Storage Service (S3) - Object storage service"
+      annotations:
+        backstage.io/source-location: url:https://aws.amazon.com/s3/
+      tags:
+        - aws
+        - storage
+        - object-storage
+    spec:
+      type: storage
+      owner: platform-team
+      system: aws-infrastructure
+      dependsOn:
+        - resource:aws-iam
+    ---
+    apiVersion: backstage.io/v1alpha1
+    kind: Resource
+    metadata:
+      name: aws-iam
+      title: AWS Identity and Access Management
+      description: "AWS IAM service for managing access to AWS services"
+      annotations:
+        backstage.io/source-location: url:https://aws.amazon.com/iam/
+      tags:
+        - aws
+        - security
+        - identity
+    spec:
+      type: security
+      owner: platform-team
+      system: aws-infrastructure
+    ---
+    apiVersion: backstage.io/v1alpha1
+    kind: System
+    metadata:
+      name: storage-management
+      title: Storage Management System
+      description: "System for managing storage resources across AWS and Kubernetes"
+      tags:
+        - storage
+        - aws
+        - kubernetes
+    spec:
+      owner: platform-team
+    ---
+    apiVersion: backstage.io/v1alpha1
+    kind: System
+    metadata:
+      name: aws-infrastructure
+      title: AWS Infrastructure System
+      description: "Core AWS infrastructure services and resources"
+      tags:
+        - aws
+        - infrastructure
+        - cloud
+    spec:
+      owner: platform-team
+    ---
+    apiVersion: backstage.io/v1alpha1
+    kind: Component
+    metadata:
+      name: dynamodb-ack-controller
+      title: DynamoDB ACK Controller
+      description: "AWS ACK Controller for managing DynamoDB resources in Kubernetes"
+      annotations:
+        backstage.io/kubernetes-id: dynamodb-ack-controller
+        backstage.io/kubernetes-namespace: ack-system
+        backstage.io/source-location: url:https://github.com/aws-controllers-k8s/dynamodb-controller
+      tags:
+        - aws
+        - dynamodb
+        - ack
+        - database
+        - kubernetes
+    spec:
+      type: service
+      lifecycle: production
+      owner: platform-team
+      system: database-management
+      providesApis:
+        - dynamodb-management-api
+      dependsOn:
+        - resource:aws-dynamodb
+    ---
+    apiVersion: backstage.io/v1alpha1
+    kind: API
+    metadata:
+      name: dynamodb-management-api
+      title: DynamoDB Management API
+      description: "Kubernetes API for managing DynamoDB tables through ACK Controller"
+      annotations:
+        backstage.io/kubernetes-id: dynamodb-management-api
+      tags:
+        - aws
+        - dynamodb
+        - kubernetes
+        - crd
+    spec:
+      type: kubernetes
+      lifecycle: production
+      owner: platform-team
+      system: database-management
+    ---
+    apiVersion: backstage.io/v1alpha1
+    kind: Resource
+    metadata:
+      name: aws-dynamodb
+      title: AWS DynamoDB Database Service
+      description: "Amazon DynamoDB - NoSQL database service"
+      annotations:
+        backstage.io/source-location: url:https://aws.amazon.com/dynamodb/
+      tags:
+        - aws
+        - database
+        - nosql
+    spec:
+      type: database
+      owner: platform-team
+      system: aws-infrastructure
+      dependsOn:
+        - resource:aws-iam
+    ---
+    apiVersion: backstage.io/v1alpha1
+    kind: System
+    metadata:
+      name: database-management
+      title: Database Management System
+      description: "System for managing database resources across AWS and Kubernetes"
+      tags:
+        - database
+        - aws
+        - kubernetes
+    spec:
+      owner: platform-team
