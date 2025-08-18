@@ -1,0 +1,14 @@
+apiVersion: s3.services.k8s.aws/v1alpha1
+kind: Bucket
+metadata:
+  name: ${{ values.bucketName }}
+  namespace: default
+spec:
+  name: ${{ values.bucketName }}
+  publicAccessBlock:
+    blockPublicAcls: true
+    blockPublicPolicy: true
+    ignorePublicAcls: true
+    restrictPublicBuckets: true
+  versioning:
+    status: Enabled
