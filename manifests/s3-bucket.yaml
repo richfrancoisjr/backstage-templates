@@ -5,10 +5,28 @@ metadata:
   namespace: default
 spec:
   name: ${{ values.bucketName }}
-  publicAccessBlock:
+{% if values.region %}  createBucketConfiguration:
+    locationConstraint: ${{ values.region }}{% endif %}
+{% if values.versioning %}  versioning:
+    status: Enabled{% endif %}
+{% if values.publicAccess %}  publicAccessBlock:
     blockPublicAcls: true
     blockPublicPolicy: true
     ignorePublicAcls: true
-    restrictPublicBuckets: true
-  versioning:
-    status: Enabled
+    restrictPublicBuckets: true{% endif %}
+{% if values.encryption != 'none' %}  encryption:
+    rules:
+      - applyServerSideEncryptionByDefault:
+          sseAlgorithm: ${{ values.encryption }}
+        bucketKeyEnabled: true{% endif %}
+  tags:
+    - key: "CreatedBy"
+      value: "Backstage"
+    - key: "Template"
+      value: "aws-s3-bucket"
+    - key: "Environment"
+      value: "development"
+    - key: "Region"
+      value: "${{ values.region }}"
+    - key: "StorageClass"
+      value: "${{ values.storageClass }}"
