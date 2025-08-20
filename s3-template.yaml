@@ -1,0 +1,134 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: aws-s3-bucket
+  title: AWS S3 Bucket Template
+  description: Create an S3 bucket using AWS ACK Controller for Kubernetes
+  tags:
+    - aws
+    - s3
+    - storage
+    - ack
+spec:
+  owner: platform-team
+  type: service
+  parameters:
+    - title: S3 Bucket Configuration
+      required: 
+        - bucketName
+        - region
+      properties:
+        bucketName:
+          title: Bucket Name
+          type: string
+          description: Name of the S3 bucket (must be globally unique)
+          pattern: '^[a-z0-9][a-z0-9-]*[a-z0-9]$'
+          minLength: 3
+          maxLength: 63
+        region:
+          title: AWS Region
+          type: string
+          description: AWS region where the bucket will be created
+          enum:
+            - us-east-1
+            - us-east-2
+            - us-west-1
+            - us-west-2
+            - eu-west-1
+            - eu-west-2
+            - eu-central-1
+            - ap-southeast-1
+            - ap-southeast-2
+            - ap-northeast-1
+          enumNames:
+            - US East (N. Virginia)
+            - US East (Ohio)
+            - US West (N. California)
+            - US West (Oregon)
+            - Europe (Ireland)
+            - Europe (London)
+            - Europe (Frankfurt)
+            - Asia Pacific (Singapore)
+            - Asia Pacific (Sydney)
+            - Asia Pacific (Tokyo)
+          default: us-east-1
+        versioning:
+          title: Enable Versioning
+          type: boolean
+          description: Enable versioning for the S3 bucket
+          default: false
+        publicAccess:
+          title: Block Public Access
+          type: boolean
+          description: Block all public access to the bucket (recommended)
+          default: true
+        encryption:
+          title: Server-Side Encryption
+          type: string
+          description: Server-side encryption configuration
+          enum:
+            - AES256
+            - aws:kms
+            - none
+          enumNames:
+            - AES-256 (S3 Managed)
+            - AWS KMS
+            - No Encryption
+          default: AES256
+        storageClass:
+          title: Default Storage Class
+          type: string
+          description: Default storage class for objects
+          enum:
+            - STANDARD
+            - STANDARD_IA
+            - ONEZONE_IA
+            - GLACIER
+            - DEEP_ARCHIVE
+          enumNames:
+            - Standard
+            - Standard-Infrequent Access
+            - One Zone-Infrequent Access
+            - Glacier
+            - Glacier Deep Archive
+          default: STANDARD
+  steps:
+    - id: log
+      name: Log
+      action: debug:log
+      input:
+        message: Creating S3 bucket ${{ parameters.bucketName }} in region ${{ parameters.region }}
+
+    - id: create-manifest
+      name: Create S3 Bucket Manifest
+      action: fetch:template
+      input:
+        url: ./manifests/
+        targetPath: ./
+        values:
+          bucketName: ${{ parameters.bucketName }}
+          region: ${{ parameters.region }}
+          versioning: ${{ parameters.versioning }}
+          publicAccess: ${{ parameters.publicAccess }}
+          encryption: ${{ parameters.encryption }}
+          storageClass: ${{ parameters.storageClass }}
+
+    - id: show-manifest
+      name: S3 Bucket Manifest Created Successfully
+      action: debug:log
+      input:
+        message: |
+          ✅ S3 bucket manifest created successfully!
+          
+          📁 Generated file: s3-bucket.yaml
+          🪣 Bucket name: ${{ parameters.bucketName }}
+          🌍 Region: ${{ parameters.region }}
+          📦 Versioning: {% if parameters.versioning %}Enabled{% else %}Disabled{% endif %}
+          🔒 Public access: {% if parameters.publicAccess %}Blocked{% else %}Allowed{% endif %}
+          🔐 Encryption: ${{ parameters.encryption }}
+          💾 Storage class: ${{ parameters.storageClass }}
+          
+          🚀 To deploy this S3 bucket to your cluster, run:
+          kubectl apply -f s3-bucket.yaml
+          
+          📋 The manifest is ready for deployment!
