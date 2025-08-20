@@ -1,0 +1,28 @@
+apiVersion: dynamodb.services.k8s.aws/v1alpha1
+kind: Table
+metadata:
+  name: ${{ values.tableName }}
+  namespace: default
+spec:
+  tableName: ${{ values.tableName }}
+  billingMode: ${{ values.billingMode }}
+  attributeDefinitions:
+    - attributeName: ${{ values.partitionKey }}
+      attributeType: ${{ values.partitionKeyType }}
+{% if values.sortKey %}    - attributeName: ${{ values.sortKey }}
+      attributeType: ${{ values.sortKeyType }}{% endif %}
+  keySchema:
+    - attributeName: ${{ values.partitionKey }}
+      keyType: HASH
+{% if values.sortKey %}    - attributeName: ${{ values.sortKey }}
+      keyType: RANGE{% endif %}
+{% if values.billingMode == 'PROVISIONED' %}  provisionedThroughput:
+    readCapacityUnits: ${{ values.readCapacity }}
+    writeCapacityUnits: ${{ values.writeCapacity }}{% endif %}
+  tags:
+    - key: "CreatedBy"
+      value: "Backstage"
+    - key: "Template"
+      value: "aws-dynamodb-table"
+    - key: "Environment"
+      value: "development"
