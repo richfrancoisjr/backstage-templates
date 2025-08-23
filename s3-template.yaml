@@ -132,3 +132,16 @@ spec:
           kubectl apply -f s3-bucket.yaml
           
           📋 The manifest is ready for deployment!
+
+    - id: deploy-to-kubernetes
+      name: Deploy S3 Bucket to Kubernetes
+      action: kubernetes:apply
+      input:
+        manifestPath: s3-bucket.yaml
+        clusterLocatorMethods:
+          - type: 'config'
+            clusters:
+              - url: ${{ parameters.clusterUrl }}
+                name: ${{ parameters.clusterName }}
+                authProvider: 'serviceAccount'
+                serviceAccountToken: ${{ parameters.token }}        
